@@ -1,7 +1,7 @@
 yesweckn
 ====================================
 
-This code provides an implementation of convolutional kernel networks trained using the method developed in the following [paper]():
+This code provides an implementation of convolutional kernel networks trained using the method developed in the following paper:
 
 C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations of Convolutional Networks. In *arXiv*, 2019.
 
@@ -46,9 +46,9 @@ You can report issues and ask questions in the repository's issues page. If you 
 
 Authors
 -----------------
-[Corinne Jones](https://www.stat.washington.edu/people/cjones6/): cjones6@uw.edu
-[Vincent Roulet](http://faculty.washington.edu/vroulet/): vroulet@uw.edu
-[Zaid Harchaoui](http://faculty.washington.edu/zaid/): zaid@uw.edu
+[Corinne Jones](https://www.stat.washington.edu/people/cjones6/): cjones6@uw.edu  
+[Vincent Roulet](http://faculty.washington.edu/vroulet/): vroulet@uw.edu  
+[Zaid Harchaoui](http://faculty.washington.edu/zaid/): zaid@uw.edu  
 
 
 License
