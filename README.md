@@ -9,7 +9,7 @@ If you use this code please cite the paper using the bibtex reference below.
 
 ```
 @article{JRH2019,
-  title={Competing with ConvNets via Kernel-based Translations},
+  title={Kernel-based Translations of Convolutional Networks},
   author={Jones, Corinne and Roulet, Vincent and Harchaoui, Zaid},
   journal={arXiv preprint},
   year={2019}
@@ -27,7 +27,7 @@ This code implements CKNs for images and other lattice-structure data and trains
 
 Installation
 -----------------
-This code was written in Python 2.7 with PyTorch version 1.0.0. It is not presently compatible with Python 3 and is not compatible with older versions of PyTorch. It also has not been tested on Windows operating systems.
+This code was written in Python 2.7 with PyTorch version 1.0.0. 
 
 The primary dependencies are:
 
@@ -41,6 +41,8 @@ The remainder of the dependencies are standard and e.g., come pre-installed with
 The code runs on a CPU or GPU, although it is intended to be run on a GPU. To run it on a CPU change the line 
 `device = torch.device('cuda:0')`
  in the file src/default_params.py to `device = torch.device('cpu')`
+ 
+This version of the code is not compatible with Python 3 and is not compatible with older versions of PyTorch. The code has not been tested on Windows operating systems.
 
 Contact
 -----------------
@@ -65,7 +67,7 @@ This work was supported by NSF TRIPODS Award CCF-1740551, the program "Learning 
 
 References
 -----------------
-- C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations of Convolutional Networks. In *arXiv*, 2019.
+- C. Jones, V. Roulet and Z. Harchaoui. Kernel-based translations of convolutional networks. In *arXiv*, 2019.
 - Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. Gradient-based learning applied to document recognition. In *Intelligent Signal Processing*, pages 306–351. IEEE Press, 2001.
 - A. Krizhevsky and G. E. Hinton. Learning multiple layers of features from tiny images. Technical report, University of Toronto, 2009.
 - J. Mairal, P. Koniusz, Z. Harchaoui, and C. Schmid. Convolutional kernel networks. In *Advances in Neural Information Processing Systems*, pages 2627–2635, 2014.
