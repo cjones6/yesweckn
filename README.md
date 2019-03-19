@@ -16,6 +16,8 @@ If you use this code please cite the paper using the bibtex reference below.
 }
 ```
 
+For a more detailed description of the code and the setup instructions see the [documentation](http://www.stat.washington.edu/people/cjones6/software/yesweckn).
+
 
 Introduction
 -----------------
@@ -25,7 +27,7 @@ This code implements CKNs for images and other lattice-structure data and trains
 
 Installation
 -----------------
-This code was written in Python 2.7 with PyTorch version 1.0.0. It is not presently compatible with Python 3 and is not compatible with older versions of PyTorch. 
+This code was written in Python 2.7 with PyTorch version 1.0.0. It is not presently compatible with Python 3 and is not compatible with older versions of PyTorch. It also has not been tested on Windows operating systems.
 
 The primary dependencies are:
 
