@@ -23,7 +23,7 @@ Introduction
 -----------------
 Convolutional kernel networks, first introduced in Mairal et al. (2014) and further developed in Mairal (2016) and Paulin et al. (2017), allow one to learn feature representations for images or signals in an unsupervised or in a supervised manner. In Jones et al. (2019) we describe a systematic way to translate a ConvNet into a CKN. Moreover, we develop an end-to-end training algorithm for CKNs and demonstrate that CKNs can achieve comparable performance to their ConvNet counterparts.
 
-This code implements CKNs for images and other data observed on a grid and trains them using a stochastic gradient optimization method with an exact gradient. The scripts in the experiments folder train the CKN counterparts to LeNet-1 and LeNet-5 on MNIST (LeCun et al., 1998) and All-CNN-C on CIFAR-10 (Springenberg et al., 2015; Krizhevsky and Hinton, 2009). Each architecture is specified in the cfg folder. 
+This code implements CKNs for images and other data observed on a grid and trains them using a stochastic gradient optimization method with an accurate gradient. The scripts in the experiments folder train the CKN counterparts to LeNet-1 and LeNet-5 on MNIST (LeCun et al., 1998) and All-CNN-C on CIFAR-10 (Springenberg et al., 2015; Krizhevsky and Hinton, 2009). Each architecture is specified in the cfg folder. 
 
 Installation
 -----------------
