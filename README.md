@@ -1,9 +1,9 @@
 yesweckn
 ====================================
 
-This code provides an implementation of convolutional kernel networks trained using the method developed in the following paper:
+This code provides an implementation of convolutional kernel networks trained using the method developed in the following [paper](https://arxiv.org/pdf/1903.08131.pdf):
 
-C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations of Convolutional Networks. In *arXiv*, 2019.
+C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations of Convolutional Networks. arXiv preprint arXiv:1903.08131, 2019.
 
 If you use this code please cite the paper using the bibtex reference below.
 
@@ -11,7 +11,7 @@ If you use this code please cite the paper using the bibtex reference below.
 @article{JRH2019,
   title={Kernel-based Translations of Convolutional Networks},
   author={Jones, Corinne and Roulet, Vincent and Harchaoui, Zaid},
-  journal={arXiv preprint},
+  journal={arXiv preprint arXiv:1903.08131},
   year={2019}
 }
 ```
@@ -50,9 +50,9 @@ You can report issues and ask questions in the repository's issues page. If you 
 
 Authors
 -----------------
-[Corinne Jones](https://www.stat.washington.edu/people/cjones6/): cjones6@uw.edu  
-[Vincent Roulet](http://faculty.washington.edu/vroulet/): vroulet@uw.edu  
-[Zaid Harchaoui](http://faculty.washington.edu/zaid/): zaid@uw.edu  
+[Corinne Jones](https://www.stat.washington.edu/people/cjones6/)  
+[Vincent Roulet](http://faculty.washington.edu/vroulet/)  
+[Zaid Harchaoui](http://faculty.washington.edu/zaid/)  
 
 
 License
@@ -67,7 +67,7 @@ This work was supported by NSF TRIPODS Award CCF-1740551, the program "Learning 
 
 References
 -----------------
-- C. Jones, V. Roulet and Z. Harchaoui. Kernel-based translations of convolutional networks. In *arXiv*, 2019.
+- C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations of Convolutional Networks. arXiv preprint arXiv:1903.08131, 2019.
 - Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner. Gradient-based learning applied to document recognition. In *Intelligent Signal Processing*, pages 306–351. IEEE Press, 2001.
 - A. Krizhevsky and G. E. Hinton. Learning multiple layers of features from tiny images. Technical report, University of Toronto, 2009.
 - J. Mairal, P. Koniusz, Z. Harchaoui, and C. Schmid. Convolutional kernel networks. In *Advances in Neural Information Processing Systems*, pages 2627–2635, 2014.
