@@ -27,7 +27,7 @@ This code implements CKNs for images and other data observed on a grid and train
 
 Installation
 -----------------
-This code is compatible with both Python 2.7 and 3.6 and was written with PyTorch version 1.0.0. 
+This code is compatible with Python 2.7, 3.6, and 3.7 and was written with PyTorch version 1.0.0. 
 
 The primary dependencies are:
 
