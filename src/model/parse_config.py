@@ -20,39 +20,43 @@
 # along with yesweckn.  If not, see <https://www.gnu.org/licenses/>.
 
 from __future__ import division
-from collections import OrderedDict
-import ConfigParser
 
-import ckn_layer
+from src import default_params as defaults
+from . import ckn_layer
+
+if defaults.python3:
+    import configparser
+else:
+    import ConfigParser as configparser
 
 
 def load_config(path):
     """
     Load and parse the CKN configuration from the specified filepath.
     """
-    setup_cfg = ConfigParser.ConfigParser(dict_type=MultiOrderedDict)
-    setup_cfg.readfp(open(path))
-    nl = len(setup_cfg.get('convolutional', 'num_filters'))
+    default_param_dict = {'pad': '0',
+                          'patch_size': '(3, 3)',
+                          'stride': '[1, 1]',
+                          'precomputed_patches': 'False',
+                          'whiten': 'False',
+                          'patch_kernel': 'rbf_sphere',
+                          'filters_init': 'spherical-k-means',
+                          'normalize': 'True',
+                          'patch_sigma': '0.6',
+                          'num_filters': '128',
+                          'pool_kernel': 'average',
+                          'pool_dim': '(1, 1)',
+                          'subsample_factor': '(1, 1)',
+                          'store_normalization': 'False',
+                          'kww_reg': '0.001',
+                          'num_newton_iters': '20',
+                         }
 
-    config = ConfigParser.ConfigParser({'pad': ['0']*nl,
-                                        'patch_size': [(3, 3)] * nl,
-                                        'stride': [[1, 1] * nl],
-                                        'precomputed_patches': ['False']*nl,
-                                        'whiten': ['False'] * nl,
-                                        'patch_kernel': ['rbf_sphere'] * nl,
-                                        'filters_init': ['spherical-k-means'] * nl,
-                                        'normalize': ['True'] * nl,
-                                        'patch_sigma': ['0.6'] * nl,
-                                        'num_filters': ['128'] * nl,
-                                        'pool_kernel': ['average']*nl,
-                                        'pool_dim': [(1, 1)] * nl,
-                                        'subsample_factor': [(1, 1)]*nl,
-                                        'store_normalization': ['False']*nl,
-                                        'kww_reg': ['0.001']*nl,
-                                        'num_newton_iters': ['20']*nl,
-                                        },
-                                       dict_type=MultiOrderedDict)
-    config.readfp(open(path))
+    config = configparser.ConfigParser(default_param_dict)
+    if defaults.python3:
+        config.read_file(open(path))
+    else:
+        config.readfp(open(path))
 
     int_args = ['pad', 'num_filters', 'num_newton_iters']
     float_args = ['patch_sigma', 'kww_reg']
@@ -63,15 +67,15 @@ def load_config(path):
     params = {}
     for arg_list, key_type in zip([int_args, float_args, str_args], [int, float, str]):
         for key in arg_list:
-            params[key] = map(key_type, config.get('convolutional', key))
+            params[key] = list(map(key_type, [config.get(section, key) for section in config.sections()]))
 
     for key in bool_args:
-        values = config.get('convolutional', key)
-        params[key] = [values[i].lower() == 'true' for i in range(nl)]
+        values = [config.get(section, key) for section in config.sections()]
+        params[key] = [values[i].lower() == 'true' for i in range(len(values))]
 
     for key in list_int_args:
-        values = config.get('convolutional', key)
-        params[key] = [eval(values[i]) for i in range(nl)]
+        values = [config.get(section, key) for section in config.sections()]
+        params[key] = [eval(values[i]) for i in range(len(values))]
 
     return params
 
@@ -104,15 +108,3 @@ def create_layers(params):
         layers.append(layer)
 
     return layers
-
-
-class MultiOrderedDict(OrderedDict):
-    """
-    Class allowing an OrderedDict to have multiple keys with the same value.
-    https://stackoverflow.com/questions/15848674/how-to-configparse-a-file-keeping-multiple-values-for-identical-keys
-    """
-    def __setitem__(self, key, value):
-        if isinstance(value, list) and key in self:
-            self[key].extend(value)
-        else:
-            super(OrderedDict, self).__setitem__(key, value)

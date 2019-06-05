@@ -29,7 +29,7 @@ import torch
 import torchvision
 from torchvision import transforms
 
-import create_data_loaders
+from . import create_data_loaders
 
 
 def get_dataloaders(batch_size, valid_size=10000, num_workers=4, transform='std', data_path='../data/cifar10',

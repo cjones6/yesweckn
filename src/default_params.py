@@ -21,6 +21,7 @@
 
 import numpy as np
 import random
+import sys
 import torch
 
 # Even with setting the seeds below there can still be non-deterministic behavior.
@@ -36,3 +37,8 @@ torch.manual_seed(seed)
 if device.type == 'cuda':
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
+
+if sys.version_info.major == 3:
+    python3 = True
+else:
+    python3 = False

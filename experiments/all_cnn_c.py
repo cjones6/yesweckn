@@ -27,7 +27,6 @@ from __future__ import division
 import argparse
 import matplotlib.pyplot as plt
 import os
-import cPickle as pickle
 import sys
 
 sys.path.append('..')
@@ -36,6 +35,11 @@ from src.opt import train_supervised
 from src.model import net, parse_config
 from src import default_params as defaults
 import src.data_loaders.cifar10 as cifar10
+
+if defaults.python3:
+    import pickle
+else:
+    import cPickle as pickle
 
 # Inputs for the data, model, and training
 parser = argparse.ArgumentParser(description='All-CNN-C CKN training on CIFAR-10')

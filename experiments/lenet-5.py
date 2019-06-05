@@ -27,7 +27,6 @@ from __future__ import division
 import argparse
 import matplotlib.pyplot as plt
 import os
-import cPickle as pickle
 import sys
 
 sys.path.append('..')
@@ -36,6 +35,11 @@ from src import default_params as defaults
 from src.opt import train_supervised
 from src.model import net, parse_config
 import src.data_loaders.mnist as mnist
+
+if defaults.python3:
+    import pickle
+else:
+    import cPickle as pickle
 
 # Inputs for the data, model, and training
 parser = argparse.ArgumentParser(description='LeNet-5 CKN training on MNIST')

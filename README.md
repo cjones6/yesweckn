@@ -27,7 +27,7 @@ This code implements CKNs for images and other data observed on a grid and train
 
 Installation
 -----------------
-This code was written in Python 2.7 with PyTorch version 1.0.0. 
+This code is compatible with both Python 2.7 and 3.6 and was written with PyTorch version 1.0.0. 
 
 The primary dependencies are:
 
@@ -42,7 +42,7 @@ The code runs on a CPU or GPU, although it is intended to be run on a GPU. To ru
 `device = torch.device('cuda:0')`
  in the file src/default_params.py to `device = torch.device('cpu')`
  
-This version of the code is not compatible with Python 3 and is not compatible with older versions of PyTorch. The code has not been tested on Windows operating systems.
+This version of the code is not compatible with older versions of PyTorch. The code has not been tested on Windows operating systems.
 
 Contact
 -----------------

@@ -24,13 +24,17 @@ from __future__ import print_function
 import copy
 import numpy as np
 import os
-import cPickle as pickle
 import time
 import torch
 import torch.nn as nn
 
 from src import default_params as defaults
-import train_unsupervised
+from . import train_unsupervised
+
+if defaults.python3:
+    import pickle
+else:
+    import cPickle as pickle
 
 
 class TrainSupervised:
@@ -45,6 +49,7 @@ class TrainSupervised:
         self.train_loader = train_loader
         self.valid_loader = valid_loader
         self.train_valid_loader = train_valid_loader
+        self.train_valid_iter = iter(self.train_valid_loader)
         self.test_loader = test_loader
         self.model = model
         self.nclasses = nclasses
@@ -110,7 +115,11 @@ class TrainSupervised:
         """
         Get a batch of training data (x, y, one-hot version of y) from the training + validation sets.
         """
-        x_train, y_train = next(iter(self.train_valid_loader))
+        try:
+            x_train, y_train = next(self.train_valid_iter)
+        except:
+            self.train_valid_iter = iter(self.train_valid_loader)
+            x_train, y_train = next(self.train_valid_iter)
         y_train_one_hot = train_unsupervised.one_hot_embedding(y_train, self.nclasses)
         x_train = x_train.type(torch.get_default_dtype()).to(defaults.device)
         y_train = y_train.to(defaults.device)
@@ -383,6 +392,7 @@ class TrainSupervised:
                 else:
                     update_w = False
                 self._optimize_classifier_full(update_wlast=update_w)
+                self.train_valid_iter = None
                 train_dict = copy.deepcopy(self.__dict__)
                 del train_dict['train_loader']
                 del train_dict['valid_loader']
@@ -409,6 +419,7 @@ class TrainSupervised:
                      'step_sizes': self.step_sizes},
                     open(self.save_path + '_results.pickle', 'wb'))
 
+        self.train_valid_iter = None
         train_dict = copy.deepcopy(self.__dict__)
         del train_dict['train_loader']
         del train_dict['valid_loader']

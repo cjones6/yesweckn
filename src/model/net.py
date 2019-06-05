@@ -27,7 +27,7 @@ import torch
 import torch.nn as nn
 
 import src.default_params as defaults
-import utils
+from . import utils
 
 # https://github.com/pytorch/pytorch/issues/973
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)

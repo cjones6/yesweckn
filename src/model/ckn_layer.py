@@ -24,7 +24,7 @@ import torch
 from torch import nn
 
 import src.default_params as defaults
-import kernels, pool, utils
+from . import kernels, pool, utils
 
 
 class CKNLayer(nn.Module):
