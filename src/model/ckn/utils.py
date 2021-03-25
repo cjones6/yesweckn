@@ -1,26 +1,3 @@
-# Copyright (c) 2019 Corinne Jones, Vincent Roulet, Zaid Harchaoui.
-#
-# This file is part of yesweckn. yesweckn provides an implementation
-# of the CKNs used in the following paper:
-#
-# C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations
-# of Convolutional Networks. In arXiv, 2019.
-#
-# yesweckn is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# yesweckn is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with yesweckn.  If not, see <https://www.gnu.org/licenses/>.
-
-from __future__ import division
-from __future__ import print_function
 import faiss
 import numpy as np
 import torch
@@ -84,7 +61,8 @@ def images_to_patches(features, patch_dim, stride=[1, 1], padding=None, whiten=F
             img_patches = patches[i]
             # Center
             for j in range(nfilters):
-                img_patches[:, j*kh*kw:(j+1)*kh*kw] = img_patches[:, j*kh*kw:(j+1)*kh*kw] - torch.mean(img_patches[:, j*kh*kw:(j+1)*kh*kw], 1).unsqueeze(1)
+                img_patches[:, j*kh*kw:(j+1)*kh*kw] = img_patches[:, j*kh*kw:(j+1)*kh*kw] - \
+                                                      torch.mean(img_patches[:, j*kh*kw:(j+1)*kh*kw], 1).unsqueeze(1)
             # Whiten
             img_patches = zca_whiten(img_patches)
             patches[i] = img_patches
@@ -131,16 +109,7 @@ def spherical_kmeans(data, k, nrestarts=10, niters=100):
     clus.seed = defaults.seed
     clus.spherical = True
 
-    if defaults.device.type == 'cuda':
-        res = faiss.StandardGpuResources()
-        cfg = faiss.GpuIndexFlatConfig()
-        cfg.useFloat16 = False
-        cfg.device = 0
-        index = faiss.GpuIndexFlatIP(res, d, cfg)
-        index.device = 0
-    else:
-        index = faiss.IndexFlatIP(d)
-        clus = faiss.Clustering(d, k)
+    index = faiss.IndexFlatIP(d)
 
     clus.train(data, index)
     centroids = faiss.vector_float_to_array(clus.centroids).reshape(k, d)
@@ -149,11 +118,43 @@ def spherical_kmeans(data, k, nrestarts=10, niters=100):
     return centroids / torch.norm(centroids, 2, 1).unsqueeze(1)
 
 
+def kmeans(data, k, nrestarts=10, niters=100):
+    """
+    Run k-means on the input data.
+    """
+    data = np.ascontiguousarray(data.cpu().numpy()).astype('float32')
+    d = data.shape[1]
+
+    clus = faiss.Clustering(d, k)
+    clus.verbose = False
+    clus.niter = niters
+    clus.nredo = nrestarts
+    clus.seed = defaults.seed
+    clus.spherical = False
+
+    index = faiss.IndexFlatL2(d)
+
+    clus.train(data, index)
+    centroids = faiss.vector_float_to_array(clus.centroids).reshape(k, d)
+    centroids = torch.Tensor(centroids).to(defaults.device)
+
+    return centroids
+
+
+def random_sample(data, k):
+    """
+    Randomly sample k rows from the input data and normalize them
+    """
+    idxs = np.random.choice(len(data), k, replace=False)
+    landmarks = data[idxs]
+    return landmarks/torch.norm(landmarks, 2, 1).unsqueeze(1)
+
+
 def stable_newton_with_newton(S, maxiter=20):
     """
     Perform the intertwined Newton method to compute the matrix inverse square root S^{-1/2}.
     """
-    T = torch.eye(*S.shape, device=defaults.device)
+    T = torch.eye(*S.shape, device=S.device)
     Id = T.clone()
     S, scale_factor = scale_init_matrix(S)
     for i in range(maxiter):

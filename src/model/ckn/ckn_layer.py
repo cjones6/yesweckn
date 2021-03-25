@@ -1,30 +1,8 @@
-# Copyright (c) 2019 Corinne Jones, Vincent Roulet, Zaid Harchaoui.
-#
-# This file is part of yesweckn. yesweckn provides an implementation
-# of the CKNs used in the following paper:
-#
-# C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations
-# of Convolutional Networks. In arXiv, 2019.
-#
-# yesweckn is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# yesweckn is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with yesweckn.  If not, see <https://www.gnu.org/licenses/>.
-
-from __future__ import division
 import torch
 from torch import nn
 
 import src.default_params as defaults
-from . import kernels, pool, utils
+from src.model.ckn import utils, kernels, pool
 
 
 class CKNLayer(nn.Module):
@@ -32,13 +10,14 @@ class CKNLayer(nn.Module):
     Single layer of a CKN.
     """
     def __init__(self, layer_num, patch_size, patch_kernel, n_filters, subsampling_factor, padding=0, stride=(1, 1),
-                 precomputed_patches=False, whiten=False, filters_init='spherical-k-means',
-                 normalize=True, patch_sigma=0.6, pool_kernel='average', pool_dim=(1, 1),
-                 store_normalization=False, kww_reg=0.001, num_newton_iters=20):
+                 precomputed_patches=False, whiten=False, filters_init='spherical-k-means', normalize=True,
+                 patch_sigma=0.6, matern_order=1.5, pool_kernel='average', pool_dim=(1, 1), store_normalization=False,
+                 kww_reg=0.001, num_newton_iters=20):
         nn.Module.__init__(self)
         self.layer_num = layer_num
         self.patch_size = patch_size
-        self.patch_kernel = self._initialize_patch_kernel(patch_kernel, patch_sigma=patch_sigma)
+        self.patch_kernel = self._initialize_patch_kernel(patch_kernel, patch_sigma=patch_sigma,
+                                                          matern_order=matern_order)
         self.n_filters = n_filters
         self.subsampling_factor = subsampling_factor
         self.pad = padding
@@ -63,8 +42,12 @@ class CKNLayer(nn.Module):
         """
         if patch_kernel.lower() == 'rbf_sphere':
             kernel = kernels.RBFSphere(kwargs['patch_sigma'])
+        elif patch_kernel.lower() == 'rbf':
+            kernel = kernels.RBF(kwargs['patch_sigma'])
         elif patch_kernel.lower() == 'linear':
             kernel = kernels.Linear()
+        elif patch_kernel.lower() == 'matern_sphere':
+            kernel = kernels.HalfMatern(kwargs['matern_order'], kwargs['patch_sigma'])
         else:
             raise NotImplementedError
 
@@ -76,6 +59,10 @@ class CKNLayer(nn.Module):
         """
         if self.filters_init == 'spherical-k-means':
             W = utils.spherical_kmeans(patches, k=self.n_filters)
+        elif self.filters_init == 'k-means':
+            W = utils.kmeans(patches, k=self.n_filters)
+        elif self.filters_init == 'random_sample':
+            W = utils.random_sample(patches, k=self.n_filters)
         elif self.filters_init == 'identity':
             W = torch.eye(patches.shape[1], patches.shape[1], device=defaults.device)
         elif self.filters_init == 'random_normal':
@@ -101,13 +88,19 @@ class CKNLayer(nn.Module):
         patches = patches / norm_patches
         return patches, norm_patches.squeeze()
 
-    def compute_normalization(self):
+    def compute_normalization(self, eps=1e-12):
         """
-        Compute the normalization k(W^TW)^{-1/2}.
+        Compute the normalization (k(WW^T)+kww_reg I)^{-1/2}.
         """
         basis_gram = self.patch_kernel(self.W, self.W)
-        identity = torch.eye(*basis_gram.shape, device=defaults.device)
-        return utils.stable_newton_with_newton(basis_gram + self.kww_reg * identity, maxiter=self.num_newton_iters)
+
+        if self.num_newton_iters > 0:
+            identity = torch.eye(*basis_gram.shape, device=basis_gram.device)
+            return utils.stable_newton_with_newton(basis_gram + self.kww_reg * identity, maxiter=self.num_newton_iters)
+        else:
+            U, S, V = torch.svd(basis_gram)
+            sqrt_S = torch.sqrt(torch.clamp(S, min=eps) + self.kww_reg)
+            return torch.mm(torch.div(U, sqrt_S), V.t())
 
     def _project(self, patches, normalization):
         """
@@ -148,22 +141,11 @@ class CKNLayer(nn.Module):
         if self.norm:
             patches, norm_patches = self._normalize_patches(patches)
         if self.normalization is None or self.store_normalization is False:
-            normalization = self.compute_normalization().to(defaults.device)
+            normalization = self.compute_normalization()
         else:
-            normalization = self.normalization.to(defaults.device)
+            normalization = self.normalization
 
-        cutoff = 113246208  # be careful with gpu memory
-        if patches.shape[0]*self.W.shape[1] < cutoff:
-            projected_patches = self._project(patches, normalization)
-        else:
-            bsize = int(cutoff/patches.shape[1])
-            idx_num = 0
-            projected_patches = []
-            while idx_num < patches.shape[0]:
-                subpatches = patches[idx_num:idx_num+bsize]
-                projected_patches.append(self._project(subpatches, normalization))
-                idx_num += bsize
-            projected_patches = torch.cat(projected_patches)
+        projected_patches = self._project(patches, normalization)
 
         if self.norm:
             if norm_patches.ndimension() > 0:
@@ -172,7 +154,6 @@ class CKNLayer(nn.Module):
                 projected_patches = projected_patches*norm_patches
 
         all_patches = utils.patches_to_images(projected_patches, self._next_dims(f))
-
         f_next = self.pooling(all_patches)
 
         return f_next

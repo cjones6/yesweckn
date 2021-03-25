@@ -1,33 +1,10 @@
-# Copyright (c) 2019 Corinne Jones, Vincent Roulet, Zaid Harchaoui.
-#
-# This file is part of yesweckn. yesweckn provides an implementation
-# of the CKNs used in the following paper:
-#
-# C. Jones, V. Roulet and Z. Harchaoui. Kernel-based Translations
-# of Convolutional Networks. In arXiv, 2019.
-#
-# yesweckn is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# yesweckn is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with yesweckn.  If not, see <https://www.gnu.org/licenses/>.
-
-from __future__ import division
-from __future__ import print_function
 import numpy as np
 import resource
 import torch
 import torch.nn as nn
 
 import src.default_params as defaults
-from . import utils
+from src.model.ckn import utils
 
 # https://github.com/pytorch/pytorch/issues/973
 rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
@@ -102,7 +79,7 @@ class CKN(nn.Module):
             layers = range(nlayers)
         for layer_num in layers:
             print('Initializing layer', layer_num)
-            if self.layers[layer_num].filters_init in ['spherical-k-means']:
+            if self.layers[layer_num].filters_init in ['spherical-k-means', 'k-means', 'random_sample']:
                 patches = self._sample_patches(data_loader, layer_num, patches_per_image, patches_per_layer)
                 self.layers[layer_num].initialize_W(patches)
             else:
