@@ -10,7 +10,7 @@ from . import create_data_loaders
 
 
 def get_dataloaders(valid_size=10000, transform='std', batch_size=128, data_path='../data/cifar10', num_workers=0,
-                    precomputed_patches=True):
+                    precomputed_patches=True, seed=0):
     """
     Create data loaders for whitened patches from CIFAR-10.
     """
@@ -61,6 +61,12 @@ def get_dataloaders(valid_size=10000, transform='std', batch_size=128, data_path
                 data.append(subset)
             dataset[dataset_name] = torch.cat(data)
         print('done')
+
+        # Shuffle the data
+        np.random.seed(seed)
+        np.random.shuffle(dataset['train_patches'])
+        np.random.seed(seed)
+        np.random.shuffle(dataset['train_labels'])
 
         train_dataset = create_data_loaders.PreloadedDataset(dataset['train_patches'], dataset['train_labels'].numpy())
         test_dataset = create_data_loaders.PreloadedDataset(dataset['test_patches'], dataset['test_labels'].numpy())

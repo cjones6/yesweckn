@@ -16,7 +16,12 @@ class TrainSupervised:
         self.model = model
         self.params = params
         self.results = results
-        self.loss = torch.nn.CrossEntropyLoss()
+        if params.loss == 'cross-entropy':
+            self.loss = torch.nn.CrossEntropyLoss()
+        elif params.loss == 'square':
+            self.loss = torch.nn.MSELoss()
+        else:
+            raise NotImplementedError
 
         # Initialize things that get updated during the training
         self.iteration = 0
@@ -104,7 +109,7 @@ class TrainSupervised:
         else:
             self.optimizer.step()
 
-        if self.params.opt_method == 'ulr-sgo':
+        if self.params.opt_method == 'ulr-sgo' and self.params.loss == 'cross-entropy':
             _, eta = self._ultimate_layer_reversal(x, y)
             self.w_last = self.w_last + eta
 
@@ -117,37 +122,49 @@ class TrainSupervised:
         features = opt_utils.compute_features(x, self.model, normalize=self.params.normalize,
                                               standardize=self.params.standardize)
         y_one_hot = opt_utils.one_hot_embedding(y, self.params.num_classes)
+        n, d = features.shape
 
-        n = len(features)
-        self.w_last = self.w_last.detach()
-        features = torch.cat((torch.ones(n, 1, device=defaults.device), features), 1)
+        if self.params.loss == 'square':
+            pi = torch.eye(n, device=defaults.device) - 1.0/n*torch.ones(n, n, device=defaults.device)
+            xpiy = features.t().mm(pi).mm(y_one_hot)
+            inv_term = features.t().mm(pi).mm(features) + \
+                       n*self.params.lambda_classifier*torch.eye(d, device=defaults.device)
+            wlast, _ = torch.solve(xpiy, inv_term)
+            obj = 1/n*(torch.sum((pi.mm(y_one_hot))**2) - torch.trace(xpiy.t().mm(wlast)))
 
-        probs = ulr_utils.mnl_probabilities(features, self.w_last)
-        grad_wlast = ulr_utils.mnl_gradient(probs, features, y_one_hot, self.w_last, self.params.lambda_classifier)
-        grad_wlast = grad_wlast.t().contiguous().view(-1)
-        if not self.params.diag_hessian:
-            hessian_wlast = ulr_utils.mnl_hessian(features, probs, self.w_last, self.params.lambda_classifier)
-            if len(grad_wlast) > 65 * 10:  # If it's too small it's faster to run it on the CPU
-                eta = - torch.solve(grad_wlast.unsqueeze(1), hessian_wlast + self.params.tau *
-                                    torch.eye(hessian_wlast.shape[0], device=defaults.device))[0].squeeze()
+            return obj, None
+        elif self.params.loss == 'cross-entropy':
+            self.w_last = self.w_last.detach()
+            features = torch.cat((torch.ones(n, 1, device=defaults.device), features), 1)
+
+            probs = ulr_utils.mnl_probabilities(features, self.w_last)
+            grad_wlast = ulr_utils.mnl_gradient(probs, features, y_one_hot, self.w_last, self.params.lambda_classifier)
+            grad_wlast = grad_wlast.t().contiguous().view(-1)
+            if not self.params.diag_hessian:
+                hessian_wlast = ulr_utils.mnl_hessian(features, probs, self.w_last, self.params.lambda_classifier)
+                if len(grad_wlast) > 65 * 10:  # If it's too small it's faster to run it on the CPU
+                    eta = - torch.solve(grad_wlast.unsqueeze(1), hessian_wlast + self.params.tau *
+                                        torch.eye(hessian_wlast.shape[0], device=defaults.device))[0].squeeze()
+                else:
+                    eta = -torch.solve(grad_wlast.unsqueeze(1).cpu(), hessian_wlast.cpu() +
+                                       self.params.tau * torch.eye(hessian_wlast.shape[0]))[0].squeeze().to(defaults.device)
+                hess_term = 0.5 * eta.dot(hessian_wlast.mv(eta))
             else:
-                eta = -torch.solve(grad_wlast.unsqueeze(1).cpu(), hessian_wlast.cpu() +
-                                   self.params.tau * torch.eye(hessian_wlast.shape[0]))[0].squeeze().to(defaults.device)
-            hess_term = 0.5 * eta.dot(hessian_wlast.mv(eta))
+                hessian_wlast = ulr_utils.mnl_hessian_diag(features, probs, self.params.lambda_classifier)
+                eta = 1/(hessian_wlast + self.params.tau) * grad_wlast
+                hess_term = 0.5 * eta.dot(hessian_wlast * eta)
+
+            obj = self.loss(torch.mm(features, self.w_last), y) \
+                  + self.params.lambda_classifier*torch.norm(self.w_last[1:])**2 \
+                  + grad_wlast.dot(eta) + hess_term \
+                  + self.params.tau/2 * torch.sum(eta ** 2)
+
+            eta = eta.view(self.params.num_classes, -1).t()
+            self.model.train()
+
+            return obj, eta
         else:
-            hessian_wlast = ulr_utils.mnl_hessian_diag(features, probs, self.params.lambda_classifier)
-            eta = 1/(hessian_wlast + self.params.tau) * grad_wlast
-            hess_term = 0.5 * eta.dot(hessian_wlast * eta)
-
-        obj = self.loss(torch.mm(features, self.w_last), y) \
-              + self.params.lambda_classifier*torch.norm(self.w_last[1:])**2 \
-              + grad_wlast.dot(eta) + hess_term \
-              + self.params.tau/2 * torch.sum(eta ** 2)
-
-        eta = eta.view(self.params.num_classes, -1).t()
-        self.model.train()
-
-        return obj, eta
+            raise NotImplementedError
 
     def _sgo_step(self, x, y):
         """
@@ -156,6 +173,11 @@ class TrainSupervised:
         features = opt_utils.compute_features(x, self.model, normalize=self.params.normalize,
                                               standardize=self.params.standardize)
         features = torch.cat((torch.ones(len(y), 1, device=defaults.device), features), 1)
+        if self.params.loss == 'square':
+            y = opt_utils.one_hot_embedding(y, self.params.num_classes)
+            y = y.type(torch.get_default_dtype()).to(defaults.device)
+        else:
+            y = y.to(defaults.device)
         obj = self.loss(torch.mm(features, self.w_last), y)
 
         return obj
@@ -170,9 +192,10 @@ class TrainSupervised:
 
         lambdas = [self.params.lambda_classifier] if self.iteration != 0 else None
         results = train_classifier.train(self.data.train_loader, self.data.valid_loader, self.data.test_loader,
-                                         self.model, self.params.num_classes, self.params.maxiter_classifier,
-                                         w_init=self.w_prev, normalize=self.params.normalize,
-                                         standardize=self.params.standardize, lambdas=lambdas)
+                                         self.model, self.params.num_classes, self.params.loss,
+                                         self.params.maxiter_classifier, w_init=self.w_prev,
+                                         normalize=self.params.normalize, standardize=self.params.standardize,
+                                         lambdas=lambdas)
         self.w_prev = results['w'].detach().cpu()
 
         if self.iteration == 0:

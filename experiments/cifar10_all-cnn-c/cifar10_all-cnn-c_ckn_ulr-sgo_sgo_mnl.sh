@@ -1,6 +1,6 @@
-save_path="../../results/cifar10_all-cnn-c_ckn_ulr-sgo_sgo_final/"
+save_path="../../results/cifar10_all-cnn-c_ckn_ulr-sgo_sgo_mnl/"
 gpu=0,2
-num_iters=10000
+num_iters=1000
 seeds=(1 2 3 4 5 6 7 8 9 10)
 
 

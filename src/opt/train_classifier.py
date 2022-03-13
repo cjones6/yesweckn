@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 
 from src import default_params as defaults
-from src.opt.opt_utils import compute_all_features
+from src.opt.opt_utils import compute_all_features, one_hot_embedding
 
 
 def next_lambda(accuracies, idxs):
@@ -42,7 +42,7 @@ def next_lambda(accuracies, idxs):
             return idxs[2], idxs
 
 
-def train(train_loader, valid_loader, test_loader, model, num_classes, maxiter, w_init=None, normalize=True,
+def train(train_loader, valid_loader, test_loader, model, num_classes, loss, maxiter, w_init=None, normalize=True,
           standardize=False, lambdas=None):
     """
     Generate features from the given model and then train a classifier. Perform hold-out validation for the
@@ -74,7 +74,7 @@ def train(train_loader, valid_loader, test_loader, model, num_classes, maxiter, 
         if accuracies[lambda_idx] is None:
             valid_acc, train_acc, valid_loss, train_loss, w = train_classifier(x_train, x_valid, y_train, y_valid,
                                                                                lambdas[lambda_idx], num_classes,
-                                                                               maxiter=maxiter, w=w_init)
+                                                                               loss, maxiter=maxiter, w=w_init)
             accuracies[lambda_idx] = valid_acc
         else:
             best_lambda = lambdas[lambda_idx]
@@ -82,7 +82,7 @@ def train(train_loader, valid_loader, test_loader, model, num_classes, maxiter, 
 
     # Final training with best lambda
     test_acc, train_acc, test_loss, train_loss, w = train_classifier(x_train, x_test, y_train, y_test, best_lambda,
-                                                                     num_classes, maxiter=maxiter, w=w_init)
+                                                                     num_classes, loss, maxiter=maxiter, w=w_init)
     valid_acc, valid_loss = compute_accuracy(x_valid, y_valid, w, torch.nn.CrossEntropyLoss())
 
     model.to(defaults.device)
@@ -93,7 +93,7 @@ def train(train_loader, valid_loader, test_loader, model, num_classes, maxiter, 
     return results_dict
 
 
-def train_classifier(x_train, x_test, y_train, y_test, lam, num_classes, maxiter=1000, w=None):
+def train_classifier(x_train, x_test, y_train, y_test, lam, num_classes, loss, maxiter=1000, w=None):
     """
     Train a linear classifier on the training data and evaluate it on the given test data (if not None).
     """
@@ -118,7 +118,14 @@ def train_classifier(x_train, x_test, y_train, y_test, lam, num_classes, maxiter
         np.random.seed(0)
         w = np.random.normal(size=(np.size(x_train, 1) + 1, num_classes))
 
-    loss = torch.nn.CrossEntropyLoss()
+    if loss == 'cross-entropy':
+        loss = torch.nn.CrossEntropyLoss()
+    else:
+        y_train = one_hot_embedding(y_train, num_classes).type(torch.get_default_dtype()).to(defaults.device)
+        if x_test is not None:
+            y_test = one_hot_embedding(y_test, num_classes).type(torch.get_default_dtype()).to(defaults.device)
+        loss = torch.nn.MSELoss()
+
     if maxiter > 0:
         opt = scipy.optimize.minimize(obj, w.flatten(), method='L-BFGS-B', jac=grad,
                                       options={'maxiter': maxiter, 'disp': False})
@@ -144,6 +151,8 @@ def compute_accuracy(x, y, w, loss):
         yhat = torch.mm(x, w[1:, :]) + w[0, :]
         loss_value = loss(yhat, y).item()
         yhat = torch.max(yhat, 1)[1]
+        if yhat.shape != y.shape:
+            y = torch.max(y, 1)[1]
         accuracy = np.mean((yhat == y).cpu().data.numpy())
     else:
         accuracy = None

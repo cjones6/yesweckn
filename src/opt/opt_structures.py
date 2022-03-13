@@ -50,7 +50,7 @@ class Params:
     Class that stores the parameters for the optimization.
     """
     def __init__(self, num_classes=10, ckn=True, train_w_layers=None, lambda_filters=0, lambda_classifier=None,
-                 standardize=False, normalize=False, w_last_init=None, opt_method='ulr-sgo',
+                 standardize=False, normalize=False, w_last_init=None, opt_method='ulr-sgo', loss='cross-entropy',
                  update_step_size_method='fixed', step_size_init=None, step_size_schedule=None,
                  lambda_filters_schedule=None, tau=None, diag_hessian=False, maxiter_classifier=1000, num_iters=1000,
                  save_path=None, eval_test_every=10, save_every=100):
@@ -63,6 +63,7 @@ class Params:
         self.normalize = normalize
         self.w_last_init = w_last_init
         self.opt_method = opt_method
+        self.loss = loss
         self.update_step_size_method = update_step_size_method
         self.step_size_init = step_size_init
         self.step_size_schedule = step_size_schedule

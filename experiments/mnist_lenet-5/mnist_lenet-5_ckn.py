@@ -30,6 +30,8 @@ parser.add_argument('--gpu', default='0', type=str,
                     help='Which GPUs to use')
 parser.add_argument('--hessian_reg', default=-7, type=int,
                     help='log2(Regularization of the Hessian for the ULR-SGO method)')
+parser.add_argument('--loss', default='cross-entropy', type=str,
+                    help="Loss function to use. Either 'cross-entropy' or 'square'.")
 parser.add_argument('--num_filters', default=32, type=int,
                     help='Number of filters per layer')
 parser.add_argument('--num_iters', default=10000, type=int,
@@ -63,8 +65,8 @@ print(args)
 
 save_dir = args.save_path
 save_file = os.path.join(save_dir, str(bw) + '_' + str(args.hessian_reg) + '_' + str(args.num_filters)
-                         + '_' + str(args.opt_method) + '_' + str(args.seed) + '_' + str(args.step_size)
-                         + '_' + str(time.time()))
+                         + '_' + str(args.opt_method) + '_' + str(args.loss) + '_' + str(args.seed) + '_'
+                         + str(args.step_size) + '_' + str(time.time()))
 
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
@@ -168,7 +170,7 @@ else:
 # Set up the data, parameters, model, optimizer, and results objects
 data = opt_structures.Data(train_loader, valid_loader, test_loader)
 params = opt_structures.Params(num_classes=num_classes, ckn=True, train_w_layers=[0, 2, 4, 5], lambda_filters=0,
-                               normalize=True, opt_method=args.opt_method, w_last_init=None,
+                               normalize=True, opt_method=args.opt_method, loss=args.loss, w_last_init=None,
                                update_step_size_method=update_step_size_method, step_size_init=args.step_size,
                                step_size_schedule=step_size_schedule, tau=args.hessian_reg, num_iters=args.num_iters,
                                save_path=save_file + '_params.pickle', eval_test_every=args.eval_test_every,
