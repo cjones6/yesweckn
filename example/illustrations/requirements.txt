@@ -1,0 +1,7 @@
+streamlit
+matplotlib
+scipy
+faiss-cpu
+torch>=1.6
+torchvision
+dppy
