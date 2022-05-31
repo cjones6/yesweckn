@@ -24,14 +24,29 @@ This code implements CKNs for images and other data observed on a grid and train
 
 Installation
 -----------------
-This code is compatible with Python 3.7 and was written with PyTorch version 1.2.0. 
+This code is compatible with Python 3.7 and was originally written with PyTorch version 1.2.0. 
 
-The primary dependencies are:
+The primary original dependencies are:
 
 * Faiss version 1.5.2 https://github.com/facebookresearch/faiss
 * Numpy version 1.16.4 https://numpy.org/
 * PyTorch version 1.2.0 and Torchvision https://pytorch.org/
 * Scipy version 1.2.1 https://www.scipy.org/
+
+The following terminal commands create a new Anaconda environment called *ckn* and install newer versions of the above packages, assuming you have a GPU and Cuda 10.0:
+```
+conda create -y --name=ckn python=3.7
+conda activate ckn
+conda install jupyter matplotlib nb_conda numpy scipy 
+conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
+conda install faiss-gpu cudatoolkit=10.0 -c pytorch
+```
+
+If you wish to run the code on a GPU with a different version of Cuda, see the [PyTorch](https://pytorch.org/) and [Faiss](https://github.com/facebookresearch/faiss/blob/master/INSTALL.md) documentations. If you only have a CPU you should change the last two lines above to
+```
+conda install pytorch torchvision cpuonly -c pytorch
+conda install faiss-cpu -c pytorch
+```
 
 The code can run on a CPU or GPU, although it is intended to be run on a GPU. It is currently set to run on a GPU. To run it on a CPU change the line 
 `device = torch.device('cuda:0')`
@@ -42,7 +57,7 @@ This version of the code is not compatible with older versions of PyTorch. The c
 
 Running the code
 -----------------
-The scripts to reproduce the experiments are in the `experiments` folder. You will need to provide the path to the data folder as the argument `data_path`. There is a Google Colab notebook that you can try out [here](https://colab.research.google.com/drive/11HJpi7no0PRk0vNlJq8rtHF-g49ZWaYJ?usp=sharing), which corresponds to the Jupyter notebook found at examples/mnist_lenet-5_ckn_example.ipynb. There is also an interactive visualization of the filters of the trained CKNs and ConvNets that you can explore [here](https://share.streamlit.io/vroulet/ckn_visualization/interactive_visualization.py)!
+The scripts to reproduce the experiments are in the `experiments` folder. You will need to provide the path to the data folder as the argument `data_path`. There is a Google Colab notebook that you can try out [here](https://colab.research.google.com/drive/11HJpi7no0PRk0vNlJq8rtHF-g49ZWaYJ?usp=sharing), which corresponds to the Jupyter notebook found at example/mnist_lenet-5_ckn_convnet_example.ipynb. There is also an interactive visualization of the filters of the trained CKNs and ConvNets that you can explore [here](https://share.streamlit.io/vroulet/ckn_visualization/interactive_visualization.py)!
 
 
 Contact
