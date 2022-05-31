@@ -42,7 +42,7 @@ This version of the code is not compatible with older versions of PyTorch. The c
 
 Running the code
 -----------------
-The scripts to reproduce the experiments are in the `experiments` folder. You will need to provide the path to the data folder as the argument `data_path`. 
+The scripts to reproduce the experiments are in the `experiments` folder. You will need to provide the path to the data folder as the argument `data_path`. There is a Google Colab notebook that you can try out [here](https://colab.research.google.com/drive/11HJpi7no0PRk0vNlJq8rtHF-g49ZWaYJ?usp=sharing), which corresponds to the Jupyter notebook found at examples/mnist_lenet-5_ckn_example.ipynb. There is also an interactive visualization of the filters of the trained CKNs and ConvNets that you can explore [here](https://share.streamlit.io/vroulet/ckn_visualization/interactive_visualization.py)!
 
 
 Contact
@@ -51,7 +51,7 @@ You can report issues and ask questions in the repository's issues page. If you 
 
 Authors
 -----------------
-[Corinne Jones](https://www.stat.washington.edu/people/cjones6/)  
+[Corinne Jones](https://cjones6.github.io/)  
 [Vincent Roulet](http://faculty.washington.edu/vroulet/)  
 [Zaid Harchaoui](http://faculty.washington.edu/zaid/)  
 
